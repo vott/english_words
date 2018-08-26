@@ -1,0 +1,22 @@
+version: '3'
+services:
+  web:
+    build: .
+    command:  "adev runserver './main.py' --app-factory='init'" 
+    env_file: .env
+    # command: "python ./main.py"
+    depends_on:
+      - postgres
+    volumes:
+      - .:/usr/src/app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgres://bard@postgres/story
+  postgres:
+    image: postgres:9.6.2-alpine
+    env_file: .env
+    # environment:
+    #   POSTGRES_USER: bard
+    #   POSTGRES_DB: story
+    #   POSTGRES_PASSWORD: STORY
