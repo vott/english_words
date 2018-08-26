@@ -8,6 +8,7 @@ from sqlalchemy import (
     create_engine, MetaData
 )
 from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.sql.expression import func, select
 from fake_useragent import UserAgent
 from sqlalchemy.orm import Session 
 
@@ -71,4 +72,8 @@ def save_words():
     words = fetch_words()
     for w in words:
         get_or_create(session, word, **{'text': w})
+
+def get_random_words(number=1):
+    query = session.query(word).order_by(func.random()).limit(number)
+    return ([u._asdict() for u in query])
 
