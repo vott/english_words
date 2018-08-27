@@ -112,7 +112,6 @@ async def fetch_results(url, word):
             cleaned_results = []
             for row in results[0:3]:
                 try:
-                    print('>>>>',instance.id)
                     title_instance = Title(text=row.a.text, parent_id=instance.id)
                     session.add(title_instance)
                     session.commit()
