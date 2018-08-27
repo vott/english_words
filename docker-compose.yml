@@ -15,8 +15,7 @@ services:
       DATABASE_URL: postgres://bard@postgres/story
   postgres:
     image: postgres:9.6.2-alpine
-    env_file: .env
-    # environment:
-    #   POSTGRES_USER: bard
-    #   POSTGRES_DB: story
-    #   POSTGRES_PASSWORD: STORY
+    environment:
+      POSTGRES_USER: bard
+      POSTGRES_DB: story
+      POSTGRES_PASSWORD: STORY

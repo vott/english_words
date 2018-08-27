@@ -1,23 +1,20 @@
-from sqlalchemy import (
-    MetaData, Table, Column, ForeignKey,
-    Integer, String, Date, MetaData
-)
+from sqlalchemy import Table, Column, Integer, ForeignKey, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.ext.declarative import declarative_base
 
-meta = MetaData()
+Base = declarative_base()
 
-word = Table(
-    'word', meta,
-    Column('id', Integer, primary_key=True),
-    Column('text', String(200), nullable=False, unique=True),
-)
+class Word(Base):
+    __tablename__ = 'word'
+    id = Column(Integer, primary_key=True)
+    text = Column(String(200), nullable=False, unique=True)
+    titles = relationship("Title")
 
-title = Table(
-    'title', meta,
-    Column('id', Integer, primary_key=True),
-    Column('text', String(200), nullable=False),
-    Column('title_id',
-           Integer,
-           ForeignKey('title.id', ondelete='CASCADE'))
-)
+class Title(Base):
+    __tablename__ = 'title'
+    id = Column(Integer, primary_key=True)
+    text = Column(String(200), nullable=False)
+    parent_id = Column(Integer, ForeignKey('word.id'))
 
-register_tables = [ word, title]
+def register_tables(engine):
+    Base.metadata.create_all(engine)
