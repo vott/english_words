@@ -36,7 +36,8 @@ def get_or_create(session, model, **kwargs):
             instance = model(**kwargs)
             session.add(instance)
             session.commit()
-        except:
+        except Exception as e:
+            print('DB', e)
             session.rollback()
         return instance
 
@@ -90,7 +91,7 @@ def get_random_words(number=100):
 async def fetch_results(url, word):
     instance = get_or_create(session, Word, **{'text':word})
     query = session.query(Title).filter_by(parent_id=instance.id).limit(3)
-    if len(list(query)):
+    if query.first():
         db_results = [ x.text for x in query]
         return(db_results)
     else:
@@ -112,8 +113,8 @@ async def fetch_results(url, word):
             for row in results[0:3]:
                 try:
                     print('>>>>',instance.id)
-                    instance = Title(text=row.a.text, parent_id=instance.id)
-                    session.add(instance)
+                    title_instance = Title(text=row.a.text, parent_id=instance.id)
+                    session.add(title_instance)
                     session.commit()
                 except:
                     session.rollback()
