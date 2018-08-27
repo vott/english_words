@@ -3,7 +3,6 @@ services:
   web:
     build: .
     command:  "adev runserver './main.py' --app-factory='init'" 
-    env_file: .env
     # command: "python ./main.py"
     depends_on:
       - postgres

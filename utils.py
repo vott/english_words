@@ -32,9 +32,12 @@ def get_or_create(session, model, **kwargs):
     if instance:
         return instance
     else:
-        instance = model(**kwargs)
-        session.add(instance)
-        session.commit()
+        try:
+            instance = model(**kwargs)
+            session.add(instance)
+            session.commit()
+        except:
+            session.rollback()
         return instance
 
 def fetch_proxies(url='https://www.sslproxies.org/', table_id='proxylisttable'):
@@ -42,7 +45,7 @@ def fetch_proxies(url='https://www.sslproxies.org/', table_id='proxylisttable'):
     proxies = []
     proxies_req = requests.get(url, headers={'User-Agent': ua.random})
     proxies_doc = proxies_req.text
-    soup = BeautifulSoup(proxies_doc.text, 'html.parser')
+    soup = BeautifulSoup(proxies_doc, 'html.parser')
     proxies_table = soup.find(id=table_id)
     for row in proxies_table.tbody.find_all('tr'):
         proxies.append({
@@ -84,43 +87,39 @@ def get_random_words(number=100):
         list_objects.append(d)
     return list_objects
 
-async def fetch_results(proxy, agent, url, session, word):
-    instance = session.query(Word).filter_by(**{'text':word}).first()
-    try:
-        response = await session.post(
-            url,
-            headers={'User-Agent': agent},
-            proxie=proxy,
-            data={
-                'q': word
-            }
-        )
-        html = await response.read()
-    except Exception as e:
-        logging.warning('Exception: {}'.format(e))
-        return None
-    soup = BeautifulSoup(html, 'html.parser')
-    results = soup.findAll("h2", {"class": "result__title"})
-    for row in results[0:3]:
-        instance.titles.append(Title(text=row))
-    session.save()
+async def fetch_results(url, word):
+    instance = get_or_create(session, Word, **{'text':word})
+    query = session.query(Title).filter_by(parent_id=instance.id).limit(3)
+    if len(list(query)):
+        db_results = [ x.text for x in query]
+        return(db_results)
+    else:
+        async with aiohttp.ClientSession() as ClientSession:
+            try:
+                response = await ClientSession.post(
+                    url,
+                    data={
+                        'q': word
+                    }
+                )
+                html = await response.read()
+            except Exception as e:
+                logging.warning('Exception: {}'.format(e))
+                return None
+            soup = BeautifulSoup(html, 'html.parser')
+            results = soup.findAll("h2", {"class": "result__title"})
+            cleaned_results = []
+            for row in results[0:3]:
+                try:
+                    print('>>>>',instance.id)
+                    instance = Title(text=row.a.text, parent_id=instance.id)
+                    session.add(instance)
+                    session.commit()
+                except:
+                    session.rollback()
+                cleaned_results.append(row.a.text)
 
+        return(cleaned_results)
 
-async def populate_titles(limit, url='https://duckduckgo.com/html/'):
-    ua = UserAgent()
-    proxies = fetch_proxies()
-    proxies_size = len(proxies)
-    words = get_random_words()
-    tasks = []
-    for index in range(1, proxies_size):
-        proxy = proxies[index]
-        ip = proxy['ip']
-        port = proxy['port']
-        proxy_url = f'http://{ip}:{port}'
-        async with aiohttp.ClientSession() as session:
-            lower = ((index-1)*limit)
-            higher = index*limit
-            for word in words[lower:higher]:
-                tasks.append(fetch_results(proxy_url, ua.random, url, session, word['text']))
-            asyncio.wait(tasks)
+    
 

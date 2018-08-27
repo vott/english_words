@@ -15,6 +15,7 @@ class Title(Base):
     id = Column(Integer, primary_key=True)
     text = Column(String(200), nullable=False)
     parent_id = Column(Integer, ForeignKey('word.id'))
+    words = relationship("Word", back_populates="titles")
 
 def register_tables(engine):
     Base.metadata.create_all(engine)
