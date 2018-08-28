@@ -24,15 +24,13 @@ class DuckDuckGoTestCase(AioHTTPTestCase):
 
 
 class TestFetchWords(unittest.TestCase):
-    """
-    Tests util function
+    """Tests util function
     """
     def setUp(self):
         self.func = fetch_words
 
     def test_functions_filter(self):
-        """
-        Tests word filtering 
+        """Tests word filtering 
         """
         with patch('requests.get') as request:
             with open('./test_info.txt') as mock_text:
